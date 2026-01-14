@@ -278,3 +278,47 @@ def is_task_completed_today(user_id: int, task_id: int) -> bool:
     result = cursor.fetchone()
     conn.close()
     return bool(result and result[0])
+
+
+# ============ РЕЙТИНГ ============
+
+def get_top_users(limit: int = 10):
+    """Получить топ пользователей по балансу"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT user_id, full_name, balance FROM users 
+        ORDER BY balance DESC LIMIT ?
+    ''', (limit,))
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
+def get_user_rank(user_id: int) -> int:
+    """Получить ранг пользователя в рейтинге"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT balance FROM users WHERE user_id = ?
+    ''', (user_id,))
+    user_balance = cursor.fetchone()
+    
+    if not user_balance:
+        conn.close()
+        return None
+    
+    cursor.execute('''
+        SELECT COUNT(*) FROM users WHERE balance > ?
+    ''', (user_balance[0],))
+    rank = cursor.fetchone()[0] + 1
+    conn.close()
+    return rank
+
+def get_user_info(user_id: int):
+    """Получить информацию пользователя"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT user_id, full_name, balance FROM users WHERE user_id = ?', (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result

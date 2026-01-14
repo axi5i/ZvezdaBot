@@ -9,6 +9,7 @@ from database import init_db, get_user_balance, add_user, update_balance, user_e
 from database import add_referral, is_referral_awarded, mark_referral_awarded, get_referral_inviter, get_all_users
 from database import add_gift_request, add_star_input_request
 from database import add_sponsor, get_active_sponsors, remove_sponsor, get_or_create_task, mark_task_completed, is_task_completed_today
+from database import get_top_users, get_user_rank, get_user_info
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import (Message, ReplyKeyboardMarkup, KeyboardButton,
@@ -26,7 +27,9 @@ BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
 ADMIN_ID = 5313369438
-BOT_USERNAME = "zvezda5bot"
+BOT_USERNAME = "zvezda5i_bot"
+# Приватный канал для логирования
+LOG_CHANNEL_ID = -1003667021274
 # Список каналов для обязательной подписки
 REQUIRED_CHANNELS = ["@NasheedI5"]
 # ====================================
@@ -104,14 +107,13 @@ def sub_inline_kb():
 
 def main_menu():
     return ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="📢 Пригласить"),
-         KeyboardButton(text="⭐ Ввести")],
-        [
-            KeyboardButton(text="🎁 Обменять подарок"),
-            KeyboardButton(text="👤 Ваш профиль")
-        ],
-        [KeyboardButton(text="🎯 Задание"),
-         KeyboardButton(text="🆘 Помощь")]
+        [KeyboardButton(text="🎯 Ежедневное Задание"),
+         KeyboardButton(text="📢 Пригласить")],
+        [KeyboardButton(text="⭐ Ввести"),
+         KeyboardButton(text="🎁 Обменять подарок")],
+        [KeyboardButton(text="👤 Ваш профиль"),
+         KeyboardButton(text="⭐ Рейтинг")],
+        [KeyboardButton(text="🆘 Помощь")]
     ],
                                resize_keyboard=True)
 
@@ -130,6 +132,14 @@ def back_kb():
 # awarded_referrals = set()  # invited_id
 
 
+async def log_to_channel(text: str):
+    """Логировать событие в приватный канал"""
+    try:
+        await bot.send_message(LOG_CHANNEL_ID, text)
+    except Exception as e:
+        print(f"Ошибка логирования: {e}")
+
+
 async def check_all_subs(user_id: int):
     for channel in REQUIRED_CHANNELS:
         try:
@@ -146,6 +156,10 @@ async def check_all_subs(user_id: int):
 async def start_cmd(message: Message):
     args = message.text.split()
     uid = message.from_user.id
+    full_name = message.from_user.full_name or "Пользователь"
+
+    # Логируем вход
+    await log_to_channel(f"👤 **Пользователь заходит:** {full_name}\n[Профиль](tg://user?id={uid})", )
 
     # Обработка реферальной ссылки
     if len(args) > 1:
@@ -159,17 +173,24 @@ async def start_cmd(message: Message):
     is_subscribed = await check_all_subs(uid)
     if is_subscribed:
         if not user_exists(uid):
-            add_user(uid, message.from_user.full_name, 3)
+            add_user(uid, full_name, 3)
             # Если пришел по рефералке и подписался
             inviter_id = get_referral_inviter(uid)
             if inviter_id and not is_referral_awarded(uid):
                 update_balance(inviter_id, 1.5)
                 mark_referral_awarded(uid)
                 try:
+                    inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "Пользователь"
                     await bot.send_message(
                         inviter_id,
-                        f"🎉 Вам начислено 1.5 ⭐ за приглашение нового пользователя: [{message.from_user.full_name}](tg://user?id={uid})",
+                        f"🎉 Вам начислено 1.5 ⭐ за приглашение нового Реферала!\n[{full_name}](tg://user?id={uid})",
                         parse_mode="Markdown")
+                    await log_to_channel(
+                        f"🎉 **Новый реферал!**\n"
+                        f"Пригласил: [{inviter_name}](tg://user?id={inviter_id})\n"
+                        f"Новый пользователь: [{full_name}](tg://user?id={uid})\n"
+                        f"Начислено: 1.5 ⭐"
+                    )
                 except:
                     pass
 
@@ -177,45 +198,53 @@ async def start_cmd(message: Message):
             "Ассаламу алейкум 🤍\n\n"
             "Это бот «Халявная Звезда ⭐️»\n\n"
             "🔹 Получай звёзды за приглашения\n"
-            "🔹 Обменивай звёзды на подарки 🎁\n\n"
-            "Добро пожаловать в главное меню!",
+            "🔹 Обменивай звёзды на подарки 🎁\n"
+            "🔹 Ежедневная Задания!\n\n"
+            "✅ Подписка проверена! Добро пожаловать!",
             reply_markup=main_menu())
     else:
         await message.answer(
-            "Чтобы продолжить пользоваться ботом подпишитесь на каналов:",
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
             reply_markup=sub_inline_kb())
 
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_check_sub(callback: CallbackQuery):
     uid = callback.from_user.id
+    full_name = callback.from_user.full_name or "Пользователь"
+    
     is_subscribed = await check_all_subs(uid)
     if not is_subscribed:
-        await callback.answer("❌ Вы не подписаны на все каналы!",
+        await callback.answer("❌ Вы не подписаны на все спонсоров!",
                               show_alert=True)
         return
 
     if not user_exists(uid):
-        add_user(uid, callback.from_user.full_name, 3)
+        add_user(uid, full_name, 3)
         # Если пришел по рефералке и подписался через кнопку
         inviter_id = get_referral_inviter(uid)
         if inviter_id and not is_referral_awarded(uid):
             update_balance(inviter_id, 1.5)
             mark_referral_awarded(uid)
             try:
+                inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "Пользователь"
                 await bot.send_message(
                     inviter_id,
-                    f"🎉 Вам начислено 1.5 ⭐ за приглашение нового пользователя: [{callback.from_user.full_name}](tg://user?id={uid})",
+                    f"🎉 Вам начислено 1.5 ⭐ за приглашение нового Реферала!\n[{full_name}](tg://user?id={uid})",
                     parse_mode="Markdown")
+                await log_to_channel(
+                    f"🎉 **Новый реферал (проверка подписки)!**\n"
+                    f"Пригласил: [{inviter_name}](tg://user?id={inviter_id})\n"
+                    f"Новый пользователь: [{full_name}](tg://user?id={uid})\n"
+                    f"Начислено: 1.5 ⭐"
+                )
             except:
                 pass
+        
+        await log_to_channel(f"✅ **Новый пользователь подтвердил подписку:** [{full_name}](tg://user?id={uid})")
 
     await callback.message.delete()
-    await bot.send_message(uid, "Ассаламу алейкум 🤍\n\n"
-                           "Это бот «Халявная Звезда ⭐️»\n\n"
-                           "🔹 Получай звёзды за приглашения\n"
-                           "🔹 Обменивай звёзды на подарки 🎁\n\n"
-                           "✅ Подписка проверена! Добро пожаловать!",
+    await bot.send_message(uid, "⭐ Все подписки пройдены!  \n🎯 Доступ к боту активирован.  \n▶️ Нажмите кнопки ниже, чтобы начать использовать функции.",
                            reply_markup=main_menu())
     await callback.answer()
 
@@ -224,22 +253,100 @@ async def process_check_sub(callback: CallbackQuery):
 @dp.message(F.text == "👤 Ваш профиль")
 async def profile(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
+    
     balance = get_user_balance(uid)
+    rank = get_user_rank(uid)
     await message.answer(f"👤 Ваш профиль\n\n"
-                         f"⭐️ Звёзд: {balance}",
+                         f"⭐️ Звёзд: {balance}\n"
+                         f"🏆 Ранг: #{rank}",
                          reply_markup=main_menu())
+    
+    await log_to_channel(f"👁️ **Просмотр профиля:** [{message.from_user.full_name}](tg://user?id={uid})")
+
+
+# ===== РЕЙТИНГ =====
+@dp.message(F.text == "⭐ Рейтинг")
+async def rating(message: Message):
+    uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
+    
+    top_users = get_top_users(10)
+    
+    if not top_users:
+        await message.answer("❌ Рейтинг пуст", reply_markup=main_menu())
+        return
+    
+    # Создаём кнопки с топ-10
+    keyboard = []
+    for i, (user_id, name, balance) in enumerate(top_users, 1):
+        button_text = f"{i}. {name} - {balance} ⭐"
+        keyboard.append([InlineKeyboardButton(text=button_text, callback_data=f"profile_{user_id}")])
+    
+    rating_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
+    
+    await message.answer("🏆 *ТОП-10 АКТИВНЫХ ПОЛЬЗОВАТЕЛЕЙ* 🏆\n\nНажмите на имя чтобы перейти на его профиль:", 
+                        parse_mode="Markdown",
+                        reply_markup=rating_kb)
+    
+    await log_to_channel(f"📊 **Просмотр рейтинга:** [{message.from_user.full_name}](tg://user?id={uid})")
+
+
+@dp.callback_query(F.data.startswith("profile_"))
+async def view_user_profile(callback: CallbackQuery):
+    target_user_id = int(callback.data.split("_")[1])
+    current_user_id = callback.from_user.id
+    
+    user_info = get_user_info(target_user_id)
+    if not user_info:
+        await callback.answer("❌ Пользователь не найден", show_alert=True)
+        return
+    
+    user_id, user_name, balance = user_info
+    rank = get_user_rank(user_id)
+    
+    text = f"👤 *Профиль пользователя*\n\n" \
+           f"Имя: {user_name}\n" \
+           f"⭐ Звёзд: {balance}\n" \
+           f"🏆 Ранг: #{rank}"
+    
+    await callback.message.edit_text(text, parse_mode="Markdown")
+    
+    # Логирование просмотра профиля
+    await log_to_channel(f"👁️ **Просмотр профиля пользователя:** [{callback.from_user.full_name}](tg://user?id={current_user_id}) смотрит профиль [{user_name}](tg://user?id={target_user_id})")
 
 
 # ===== ПРИГЛАСИТЬ =====
 @dp.message(F.text == "📢 Пригласить")
 async def invite(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
     ref_link = f"https://t.me/{BOT_USERNAME}?start={uid}"
     await message.answer(
         f"Ваша реферальная ссылка 🔗\n`{ref_link}`\n\n"
         "За каждого приглашённого друга вы получите 1.5 ⭐",
         parse_mode="Markdown",
         reply_markup=main_menu())
+    
+    await log_to_channel(f"🔗 **Просмотр реф. ссылки:** [{message.from_user.full_name}](tg://user?id={uid})")
 
 
 # ===== ОБМЕН ПОДАРКОВ =====
@@ -265,6 +372,15 @@ GIFTS_DATA = {
 
 @dp.message(F.text == "🎁 Обменять подарок")
 async def start_exchange(message: Message, state: FSMContext):
+    uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
+    
     kb = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="15 ⭐"),
                    KeyboardButton(text="25 ⭐")],
@@ -343,9 +459,17 @@ async def finalize_exchange(message: Message, state: FSMContext):
 
 
 # ===== ЗАДАНИЕ ДНЯ =====
-@dp.message(F.text == "🎯 Задание")
+@dp.message(F.text == "🎯 Ежедневное Задание")
 async def daily_task(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
+    
     sponsors = get_active_sponsors()
     
     if not sponsors:
@@ -586,6 +710,14 @@ async def process_help(message: Message, state: FSMContext):
 @dp.message(F.text == "⭐ Ввести")
 async def enter_stars(message: Message, state: FSMContext):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
+            reply_markup=sub_inline_kb())
+        return
+    
     balance = get_user_balance(uid)
 
     if balance < 50:
@@ -721,6 +853,20 @@ async def process_admin_support_reply(message: Message, state: FSMContext):
                              reply_markup=main_menu())
 
     await state.clear()
+
+
+# ===== ОБРАБОТКА СЛУЧАЙНОГО ТЕКСТА =====
+@dp.message()
+async def handle_invalid_input(message: Message):
+    """Обработка всех остальных сообщений"""
+    await message.answer(
+        "⚠️ Неверный ввод\n\n"
+        "Бот не обрабатывает произвольный текст.\n"
+        "Используйте кнопки ниже ⬇️",
+        reply_markup=main_menu())
+    
+    await log_to_channel(f"❌ **Неверный ввод:** [{message.from_user.full_name}](tg://user?id={message.from_user.id}) написал: `{message.text}`")
+
 
 # ===== ЗАПУСК =====
 async def main():
