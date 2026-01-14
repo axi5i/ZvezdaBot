@@ -51,6 +51,41 @@ def init_db():
         )
     ''')
     
+    # Таблица спонсоров
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sponsors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            channel_name TEXT UNIQUE,
+            added_by INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_active INTEGER DEFAULT 1
+        )
+    ''')
+    
+    # Таблица заданий
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sponsor_id INTEGER,
+            sponsor_name TEXT,
+            last_reset TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_users TEXT DEFAULT '',
+            FOREIGN KEY(sponsor_id) REFERENCES sponsors(id)
+        )
+    ''')
+    
+    # Таблица выполненных заданий пользователями
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            task_id INTEGER,
+            completed_today INTEGER DEFAULT 0,
+            last_completed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(task_id) REFERENCES tasks(id)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -156,3 +191,90 @@ def add_star_input_request(user_id: int, amount: float):
                   (user_id, amount))
     conn.commit()
     conn.close()
+
+
+# ============ СПОНСОРЫ И ЗАДАНИЯ ============
+
+def add_sponsor(channel_name: str, added_by: int) -> int:
+    """Добавить спонсора"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO sponsors (channel_name, added_by) VALUES (?, ?)',
+                      (channel_name, added_by))
+        conn.commit()
+        sponsor_id = cursor.lastrowid
+        conn.close()
+        return sponsor_id
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None
+
+def get_active_sponsors():
+    """Получить всех активных спонсоров"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, channel_name FROM sponsors WHERE is_active = 1')
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
+def remove_sponsor(channel_name: str):
+    """Удалить спонсора"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('UPDATE sponsors SET is_active = 0 WHERE channel_name = ?', (channel_name,))
+    conn.commit()
+    conn.close()
+
+def get_or_create_task(sponsor_id: int, sponsor_name: str):
+    """Получить или создать задание на день"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    # Проверяем, есть ли задание на сегодня
+    cursor.execute('''
+        SELECT id FROM tasks 
+        WHERE sponsor_id = ? AND date(last_reset) = date('now')
+    ''', (sponsor_id,))
+    
+    result = cursor.fetchone()
+    if result:
+        conn.close()
+        return result[0]
+    
+    # Создаём новое задание на день
+    cursor.execute('''
+        INSERT INTO tasks (sponsor_id, sponsor_name) VALUES (?, ?)
+    ''', (sponsor_id, sponsor_name))
+    conn.commit()
+    task_id = cursor.lastrowid
+    conn.close()
+    return task_id
+
+def mark_task_completed(user_id: int, task_id: int):
+    """Отметить задание как выполненное для пользователя"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        INSERT OR REPLACE INTO user_tasks (user_id, task_id, completed_today)
+        VALUES (?, ?, 1)
+    ''', (user_id, task_id))
+    
+    conn.commit()
+    conn.close()
+
+def is_task_completed_today(user_id: int, task_id: int) -> bool:
+    """Проверить, выполнил ли пользователь задание сегодня"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT completed_today FROM user_tasks 
+        WHERE user_id = ? AND task_id = ? AND date(last_completed) = date('now')
+    ''', (user_id, task_id))
+    
+    result = cursor.fetchone()
+    conn.close()
+    return bool(result and result[0])

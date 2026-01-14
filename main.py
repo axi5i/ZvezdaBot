@@ -1,11 +1,14 @@
 import asyncio
 import logging
 import os
+import random
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from background import keep_alive
 from database import init_db, get_user_balance, add_user, update_balance, user_exists
 from database import add_referral, is_referral_awarded, mark_referral_awarded, get_referral_inviter, get_all_users
 from database import add_gift_request, add_star_input_request
+from database import add_sponsor, get_active_sponsors, remove_sponsor, get_or_create_task, mark_task_completed, is_task_completed_today
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import (Message, ReplyKeyboardMarkup, KeyboardButton,
@@ -58,6 +61,19 @@ class AdminSupportReply(StatesGroup):
     message = State()
 
 
+class AdminAddSponsor(StatesGroup):
+    channel_name = State()
+    duration = State()
+
+
+class AdminRemoveSponsor(StatesGroup):
+    channel_name = State()
+
+
+class AdminAddPermanentSponsor(StatesGroup):
+    channel_name = State()
+
+
 # Клавиатуры
 def sub_inline_kb():
     keyboard = []
@@ -93,7 +109,9 @@ def main_menu():
         [
             KeyboardButton(text="🎁 Обменять подарок"),
             KeyboardButton(text="👤 Ваш профиль")
-        ], [KeyboardButton(text="🆘 Помощь")]
+        ],
+        [KeyboardButton(text="🎯 Задание"),
+         KeyboardButton(text="🆘 Помощь")]
     ],
                                resize_keyboard=True)
 
@@ -324,6 +342,88 @@ async def finalize_exchange(message: Message, state: FSMContext):
     await state.clear()
 
 
+# ===== ЗАДАНИЕ ДНЯ =====
+@dp.message(F.text == "🎯 Задание")
+async def daily_task(message: Message):
+    uid = message.from_user.id
+    sponsors = get_active_sponsors()
+    
+    if not sponsors:
+        await message.answer("❌ На данный момент заданий нет", reply_markup=main_menu())
+        return
+    
+    # Берём первого активного спонсора
+    sponsor_id, sponsor_name = sponsors[0]
+    task_id = get_or_create_task(sponsor_id, sponsor_name)
+    
+    if is_task_completed_today(uid, task_id):
+        await message.answer(
+            "✅ Вы уже выполнили задание на сегодня!\n\n"
+            "Приходите завтра для нового задания 🌙",
+            reply_markup=main_menu())
+        return
+    
+    # Показываем задание
+    task_kb = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="✅ Выполнил задание", callback_data=f"check_task_{task_id}_{sponsor_id}_{sponsor_name}")
+    ]])
+    
+    await message.answer(
+        f"🎯 *Задание на сегодня:*\n\n"
+        f"Подпишитесь на канал: *{sponsor_name}*\n\n"
+        f"После подписки нажмите кнопку ниже ⬇️",
+        parse_mode="Markdown",
+        reply_markup=task_kb)
+
+
+@dp.callback_query(F.data.startswith("check_task_"))
+async def check_task_completion(callback: CallbackQuery):
+    _, task_id, sponsor_id, sponsor_name = callback.data.split("_", 3)
+    task_id = int(task_id)
+    sponsor_id = int(sponsor_id)
+    uid = callback.from_user.id
+    
+    # Проверяем подписку на канал спонсора
+    try:
+        member = await bot.get_chat_member(sponsor_name, uid)
+        if member.status not in ["member", "administrator", "creator"]:
+            await callback.answer("❌ Вы не подписаны на канал спонсора!", show_alert=True)
+            return
+    except Exception:
+        await callback.answer("❌ Ошибка проверки подписки", show_alert=True)
+        return
+    
+    # Генерируем награду
+    reward = generate_reward()
+    
+    # Отмечаем задание как выполненное
+    mark_task_completed(uid, task_id)
+    update_balance(uid, reward)
+    
+    await callback.message.delete()
+    await callback.message.answer(
+        f"🎉 *Спасибо за выполнение задания!*\n\n"
+        f"✅ Вы подписались на {sponsor_name}\n"
+        f"⭐ Вам начислено: *{reward}* звёзд\n\n"
+        f"Приходите завтра для нового задания!",
+        parse_mode="Markdown",
+        reply_markup=main_menu())
+    
+    await callback.answer("✅ Задание выполнено!")
+
+
+def generate_reward():
+    """Генерировать случайную награду за задание"""
+    rand = random.random()
+    
+    if rand < 0.01:  # 1% - 1 звезда
+        return 1.0
+    elif rand < 0.15:  # 14% - от 0.80 до 0.99
+        return round(random.uniform(0.80, 0.99), 2)
+    else:  # 85% - от 0.10 до 0.80
+        return round(random.uniform(0.10, 0.80), 2)
+
+
 # ===== АДМИН ПАНЕЛЬ (РАССЫЛКА) =====
 @dp.message(Command("broadcast"))
 async def start_broadcast(message: Message, state: FSMContext):
@@ -356,6 +456,93 @@ async def process_broadcast(message: Message, state: FSMContext):
         f"✅ Рассылка завершена! Получили: {count} пользователей.",
         reply_markup=main_menu())
     await state.clear()
+
+
+# ===== АДМИН КОМАНДЫ ДЛЯ СПОНСОРОВ =====
+
+@dp.message(Command("addsponsor"))
+async def add_sponsor_cmd(message: Message, state: FSMContext):
+    """Добавить спонсора с временным сроком: /addsponsor @channel 24h"""
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    args = message.text.split()
+    if len(args) != 3:
+        await message.answer("❌ Формат: /addsponsor @канал время\n\nПримеры времени: 1h, 24h, 7d, 30d")
+        return
+    
+    channel_name = args[1]
+    duration = args[2]
+    
+    sponsor_id = add_sponsor(channel_name, message.from_user.id)
+    if sponsor_id is None:
+        await message.answer(f"❌ Спонсор {channel_name} уже добавлен")
+        return
+    
+    await message.answer(
+        f"✅ Спонсор добавлен!\n\n"
+        f"Канал: {channel_name}\n"
+        f"Срок: {duration}\n\n"
+        f"Пользователи смогут выполнять задание на этот канал в течение {duration}.")
+
+
+@dp.message(Command("addsponsorfree"))
+async def add_sponsor_free_cmd(message: Message, state: FSMContext):
+    """Добавить постоянного спонсора: /addsponsorfree @channel"""
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer("❌ Формат: /addsponsorfree @канал")
+        return
+    
+    channel_name = args[1]
+    
+    sponsor_id = add_sponsor(channel_name, message.from_user.id)
+    if sponsor_id is None:
+        await message.answer(f"❌ Спонсор {channel_name} уже добавлен")
+        return
+    
+    await message.answer(
+        f"✅ Постоянный спонсор добавлен!\n\n"
+        f"Канал: {channel_name}\n\n"
+        f"Пользователи будут выполнять задания на этот канал")
+
+
+@dp.message(Command("removesponsor"))
+async def remove_sponsor_cmd(message: Message, state: FSMContext):
+    """Удалить спонсора: /removesponsor @channel"""
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer("❌ Формат: /removesponsor @канал")
+        return
+    
+    channel_name = args[1]
+    remove_sponsor(channel_name)
+    
+    await message.answer(f"✅ Спонсор {channel_name} удален")
+
+
+@dp.message(Command("sponsors"))
+async def list_sponsors_cmd(message: Message):
+    """Показать список активных спонсоров"""
+    if message.from_user.id != ADMIN_ID:
+        return
+    
+    sponsors = get_active_sponsors()
+    if not sponsors:
+        await message.answer("❌ Активных спонсоров нет")
+        return
+    
+    text = "📋 *Активные спонсоры:*\n\n"
+    for i, (sponsor_id, channel_name) in enumerate(sponsors, 1):
+        text += f"{i}. {channel_name}\n"
+    
+    await message.answer(text, parse_mode="Markdown")
 
 
 # ===== ПОМОЩЬ =====
