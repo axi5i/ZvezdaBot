@@ -30,8 +30,6 @@ ADMIN_ID = 5313369438
 BOT_USERNAME = "zvezda5i_bot"
 # Приватный канал для логирования
 LOG_CHANNEL_ID = -1003667021274
-# Список каналов для обязательной подписки
-REQUIRED_CHANNELS = ["@NasheedI5"]
 # ====================================
 
 # Инициализация базы данных
@@ -80,23 +78,13 @@ class AdminAddPermanentSponsor(StatesGroup):
 # Клавиатуры
 def sub_inline_kb():
     keyboard = []
-    # Формируем кнопки подписок в два столбца (по 2 в ряду)
-    for i in range(0, len(REQUIRED_CHANNELS), 2):
-        row = []
-        # Левая кнопка
-        row.append(
-            InlineKeyboardButton(
-                text=f"{i+1} Подписаться",
-                url=f"https://t.me/{REQUIRED_CHANNELS[i].replace('@', '')}"))
-        # Правая кнопка (если есть)
-        if i + 1 < len(REQUIRED_CHANNELS):
-            row.append(
-                InlineKeyboardButton(
-                    text=f"{i+2} Подписаться",
-                    url=
-                    f"https://t.me/{REQUIRED_CHANNELS[i+1].replace('@', '')}"))
-        keyboard.append(row)
-
+    # Кнопка подписки на канал
+    keyboard.append([
+        InlineKeyboardButton(
+            text="📢 Подписаться на канал",
+            url="https://t.me/NasheedI5")
+    ])
+    
     # Кнопка проверки внизу
     keyboard.append([
         InlineKeyboardButton(text="проверить подписку ✅",
@@ -141,13 +129,7 @@ async def log_to_channel(text: str):
 
 
 async def check_all_subs(user_id: int):
-    for channel in REQUIRED_CHANNELS:
-        try:
-            member = await bot.get_chat_member(channel, user_id)
-            if member.status not in ["member", "administrator", "creator"]:
-                return False
-        except Exception:
-            return False
+    """Упрощенная проверка - просто возвращаем True для всех"""
     return True
 
 
