@@ -1,0 +1,72 @@
+# ⚠️ Python НЕ УСТАНОВЛЕН
+
+## Что нужно сделать:
+
+### Шаг 1: Установите Python
+
+1. Перейдите на: https://www.python.org/downloads/
+2. Нажмите кнопку "Download Python 3.11" (или новее)
+3. Запустите скачанный файл
+4. **⚠️ ВАЖНО!** Отметьте галочку **"Add Python to PATH"**
+5. Нажмите "Install Now"
+6. **Перезагрузите компьютер!**
+
+### Шаг 2: Проверьте установку
+
+Откройте PowerShell и напишите:
+```powershell
+python --version
+```
+
+Должно показать: `Python 3.11.x` (или подобное)
+
+---
+
+## После установки Python:
+
+Откройте PowerShell и выполните команды:
+
+```powershell
+# Перейти в папку проекта
+cd c:\Users\пк\.vscode\zvezdaBot
+
+# Создать виртуальное окружение
+python -m venv venv
+
+# Активировать окружение
+.\venv\Scripts\Activate.ps1
+
+# Если ошибка - выполните это:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Затем снова активируйте:
+.\venv\Scripts\Activate.ps1
+
+# Установите зависимости
+pip install -r requirements.txt
+
+# Запустите бота
+python main.py
+```
+
+---
+
+## 🎯 Если всё прошло успешно:
+
+Должны увидеть в консоли:
+```
+🚀 BOT STARTED
+🌐 Web server started on port 8080
+```
+
+Тогда откройте Telegram и найдите бота **@zvezda5bot**
+
+---
+
+## ❓ Проблемы?
+
+1. **"python не распознана"** - Переустановите Python, обязательно отметив "Add to PATH"
+2. **"Permission denied"** - Выполните команду `Set-ExecutionPolicy` выше
+3. **"ModuleNotFoundError"** - Выполните `pip install -r requirements.txt`
+
+**Все файлы готовы! Просто установите Python и запустите!** 🚀
