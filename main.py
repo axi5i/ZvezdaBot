@@ -182,24 +182,14 @@ async def start_cmd(message: Message):
             "🔹 Получай звёзды за приглашения\n"
             "🔹 Обменивай звёзды на подарки 🎁\n"
             "🔹 Ежедневная Задания!\n\n"
-            "✅ Подписка проверена! Добро пожаловать!",
+            "✅ Добро пожаловать!",
             reply_markup=main_menu())
-    else:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
 
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_check_sub(callback: CallbackQuery):
     uid = callback.from_user.id
     full_name = callback.from_user.full_name or "Пользователь"
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await callback.answer("❌ Вы не подписаны на все спонсоров!",
-                              show_alert=True)
-        return
 
     if not user_exists(uid):
         add_user(uid, full_name, 3)
@@ -235,14 +225,6 @@ async def process_check_sub(callback: CallbackQuery):
 @dp.message(F.text == "👤 Ваш профиль")
 async def profile(message: Message):
     uid = message.from_user.id
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
-    
     balance = get_user_balance(uid)
     rank = get_user_rank(uid)
     await message.answer(f"👤 Ваш профиль\n\n"
@@ -257,13 +239,6 @@ async def profile(message: Message):
 @dp.message(F.text == "⭐ Рейтинг")
 async def rating(message: Message):
     uid = message.from_user.id
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
     
     top_users = get_top_users(10)
     
@@ -315,12 +290,6 @@ async def view_user_profile(callback: CallbackQuery):
 async def invite(message: Message):
     uid = message.from_user.id
     
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
     ref_link = f"https://t.me/{BOT_USERNAME}?start={uid}"
     await message.answer(
         f"Ваша реферальная ссылка 🔗\n`{ref_link}`\n\n"
@@ -355,13 +324,6 @@ GIFTS_DATA = {
 @dp.message(F.text == "🎁 Обменять подарок")
 async def start_exchange(message: Message, state: FSMContext):
     uid = message.from_user.id
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
     
     kb = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="15 ⭐"),
@@ -444,13 +406,6 @@ async def finalize_exchange(message: Message, state: FSMContext):
 @dp.message(F.text == "🎯 Ежедневное Задание")
 async def daily_task(message: Message):
     uid = message.from_user.id
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
     
     sponsors = get_active_sponsors()
     
@@ -692,14 +647,6 @@ async def process_help(message: Message, state: FSMContext):
 @dp.message(F.text == "⭐ Ввести")
 async def enter_stars(message: Message, state: FSMContext):
     uid = message.from_user.id
-    
-    is_subscribed = await check_all_subs(uid)
-    if not is_subscribed:
-        await message.answer(
-            "⚠️ Вы ещё не подписались на всех спонсоров. \n✅Подпишитесь и нажмите «Проверить подписку» снова.",
-            reply_markup=sub_inline_kb())
-        return
-    
     balance = get_user_balance(uid)
 
     if balance < 50:
