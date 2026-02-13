@@ -19,20 +19,22 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
-# Загрузить переменные из .env файла
+# ╨Ч╨░╨│╤А╤Г╨╖╨╕╤В╤М ╨┐╨╡╤А╨╡╨╝╨╡╨╜╨╜╤Л╨╡ ╨╕╨╖ .env ╤Д╨░╨╣╨╗╨░
 load_dotenv()
 
-# ============ НАСТРОЙКИ ============
+# ============ ╨Э╨Р╨б╨в╨а╨Ю╨Щ╨Ъ╨Ш ============
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
 ADMIN_ID = 5313369438
 BOT_USERNAME = "zvezda5i_bot"
-# Приватный канал для логирования
+# ╨Я╤А╨╕╨▓╨░╤В╨╜╤Л╨╣ ╨║╨░╨╜╨░╨╗ ╨┤╨╗╤П ╨╗╨╛╨│╨╕╤А╨╛╨▓╨░╨╜╨╕╤П
 LOG_CHANNEL_ID = -1003667021274
+# ╨б╨┐╨╕╤Б╨╛╨║ ╨║╨░╨╜╨░╨╗╨╛╨▓ ╨┤╨╗╤П ╨╛╨▒╤П╨╖╨░╤В╨╡╨╗╤М╨╜╨╛╨╣ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╨╕
+REQUIRED_CHANNELS = ["@NasheedI5"]
 # ====================================
 
-# Инициализация базы данных
+# ╨Ш╨╜╨╕╤Ж╨╕╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П ╨▒╨░╨╖╤Л ╨┤╨░╨╜╨╜╤Л╤Е
 init_db()
 
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +42,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 
-# Состояния
+# ╨б╨╛╤Б╤В╨╛╤П╨╜╨╕╤П
 class GiftExchange(StatesGroup):
     choosing_tier = State()
     choosing_gift = State()
@@ -75,19 +77,29 @@ class AdminAddPermanentSponsor(StatesGroup):
     channel_name = State()
 
 
-# Клавиатуры
+# ╨Ъ╨╗╨░╨▓╨╕╨░╤В╤Г╤А╤Л
 def sub_inline_kb():
     keyboard = []
-    # Кнопка подписки на канал
+    # ╨д╨╛╤А╨╝╨╕╤А╤Г╨╡╨╝ ╨║╨╜╨╛╨┐╨║╨╕ ╨┐╨╛╨┤╨┐╨╕╤Б╨╛╨║ ╨▓ ╨┤╨▓╨░ ╤Б╤В╨╛╨╗╨▒╤Ж╨░ (╨┐╨╛ 2 ╨▓ ╤А╤П╨┤╤Г)
+    for i in range(0, len(REQUIRED_CHANNELS), 2):
+        row = []
+        # ╨Ы╨╡╨▓╨░╤П ╨║╨╜╨╛╨┐╨║╨░
+        row.append(
+            InlineKeyboardButton(
+                text=f"{i+1} ╨Я╨╛╨┤╨┐╨╕╤Б╨░╤В╤М╤Б╤П",
+                url=f"https://t.me/{REQUIRED_CHANNELS[i].replace('@', '')}"))
+        # ╨Я╤А╨░╨▓╨░╤П ╨║╨╜╨╛╨┐╨║╨░ (╨╡╤Б╨╗╨╕ ╨╡╤Б╤В╤М)
+        if i + 1 < len(REQUIRED_CHANNELS):
+            row.append(
+                InlineKeyboardButton(
+                    text=f"{i+2} ╨Я╨╛╨┤╨┐╨╕╤Б╨░╤В╤М╤Б╤П",
+                    url=
+                    f"https://t.me/{REQUIRED_CHANNELS[i+1].replace('@', '')}"))
+        keyboard.append(row)
+
+    # ╨Ъ╨╜╨╛╨┐╨║╨░ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╕ ╨▓╨╜╨╕╨╖╤Г
     keyboard.append([
-        InlineKeyboardButton(
-            text="📢 Подписаться на канал",
-            url="https://t.me/NasheedI5")
-    ])
-    
-    # Кнопка проверки внизу
-    keyboard.append([
-        InlineKeyboardButton(text="проверить подписку ✅",
+        InlineKeyboardButton(text="╨┐╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г тЬЕ",
                              callback_data="check_subscription")
     ])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -95,41 +107,47 @@ def sub_inline_kb():
 
 def main_menu():
     return ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🎯 Ежедневное Задание"),
-         KeyboardButton(text="📢 Пригласить")],
-        [KeyboardButton(text="⭐ Ввести"),
-         KeyboardButton(text="🎁 Обменять подарок")],
-        [KeyboardButton(text="👤 Ваш профиль"),
-         KeyboardButton(text="⭐ Рейтинг")],
-        [KeyboardButton(text="🆘 Помощь")]
+        [KeyboardButton(text="ЁЯОп ╨Х╨╢╨╡╨┤╨╜╨╡╨▓╨╜╨╛╨╡ ╨Ч╨░╨┤╨░╨╜╨╕╨╡"),
+         KeyboardButton(text="ЁЯУв ╨Я╤А╨╕╨│╨╗╨░╤Б╨╕╤В╤М")],
+        [KeyboardButton(text="тнР ╨Т╨▓╨╡╤Б╤В╨╕"),
+         KeyboardButton(text="ЁЯОБ ╨Ю╨▒╨╝╨╡╨╜╤П╤В╤М ╨┐╨╛╨┤╨░╤А╨╛╨║")],
+        [KeyboardButton(text="ЁЯСд ╨Т╨░╤И ╨┐╤А╨╛╤Д╨╕╨╗╤М"),
+         KeyboardButton(text="тнР ╨а╨╡╨╣╤В╨╕╨╜╨│")],
+        [KeyboardButton(text="ЁЯЖШ ╨Я╨╛╨╝╨╛╤Й╤М")]
     ],
                                resize_keyboard=True)
 
 
 def back_kb():
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="🔙 Назад в меню")]],
+        keyboard=[[KeyboardButton(text="ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О")]],
         resize_keyboard=True)
 
 
-# База пользователей - теперь используется SQLite
+# ╨С╨░╨╖╨░ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╡╨╣ - ╤В╨╡╨┐╨╡╤А╤М ╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╡╤В╤Б╤П SQLite
 # users = {5313369438: 1000, 6692832760: 1000000}
-# База рефералов - теперь используется SQLite
+# ╨С╨░╨╖╨░ ╤А╨╡╤Д╨╡╤А╨░╨╗╨╛╨▓ - ╤В╨╡╨┐╨╡╤А╤М ╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╡╤В╤Б╤П SQLite
 # referrals = {}  # invited_id -> inviter_id
-# Список тех, кто уже получил награду за подписку реферала
+# ╨б╨┐╨╕╤Б╨╛╨║ ╤В╨╡╤Е, ╨║╤В╨╛ ╤Г╨╢╨╡ ╨┐╨╛╨╗╤Г╤З╨╕╨╗ ╨╜╨░╨│╤А╨░╨┤╤Г ╨╖╨░ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г ╤А╨╡╤Д╨╡╤А╨░╨╗╨░
 # awarded_referrals = set()  # invited_id
 
 
 async def log_to_channel(text: str):
-    """Логировать событие в приватный канал"""
+    """╨Ы╨╛╨│╨╕╤А╨╛╨▓╨░╤В╤М ╤Б╨╛╨▒╤Л╤В╨╕╨╡ ╨▓ ╨┐╤А╨╕╨▓╨░╤В╨╜╤Л╨╣ ╨║╨░╨╜╨░╨╗"""
     try:
         await bot.send_message(LOG_CHANNEL_ID, text)
     except Exception as e:
-        print(f"Ошибка логирования: {e}")
+        print(f"╨Ю╤И╨╕╨▒╨║╨░ ╨╗╨╛╨│╨╕╤А╨╛╨▓╨░╨╜╨╕╤П: {e}")
 
 
 async def check_all_subs(user_id: int):
-    """Упрощенная проверка - просто возвращаем True для всех"""
+    for channel in REQUIRED_CHANNELS:
+        try:
+            member = await bot.get_chat_member(channel, user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                return False
+        except Exception:
+            return False
     return True
 
 
@@ -138,12 +156,12 @@ async def check_all_subs(user_id: int):
 async def start_cmd(message: Message):
     args = message.text.split()
     uid = message.from_user.id
-    full_name = message.from_user.full_name or "Пользователь"
+    full_name = message.from_user.full_name or "╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М"
 
-    # Логируем вход
-    await log_to_channel(f"👤 **Пользователь заходит:** {full_name}\n[Профиль](tg://user?id={uid})", )
+    # ╨Ы╨╛╨│╨╕╤А╤Г╨╡╨╝ ╨▓╤Е╨╛╨┤
+    await log_to_channel(f"ЁЯСд **╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╨╖╨░╤Е╨╛╨┤╨╕╤В:** {full_name}\n[╨Я╤А╨╛╤Д╨╕╨╗╤М](tg://user?id={uid})", )
 
-    # Обработка реферальной ссылки
+    # ╨Ю╨▒╤А╨░╨▒╨╛╤В╨║╨░ ╤А╨╡╤Д╨╡╤А╨░╨╗╤М╨╜╨╛╨╣ ╤Б╤Б╤Л╨╗╨║╨╕
     if len(args) > 1:
         try:
             inviter_id = int(args[1])
@@ -156,109 +174,134 @@ async def start_cmd(message: Message):
     if is_subscribed:
         if not user_exists(uid):
             add_user(uid, full_name, 3)
-            # Если пришел по рефералке и подписался
+            # ╨Х╤Б╨╗╨╕ ╨┐╤А╨╕╤И╨╡╨╗ ╨┐╨╛ ╤А╨╡╤Д╨╡╤А╨░╨╗╨║╨╡ ╨╕ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╤Б╤П
             inviter_id = get_referral_inviter(uid)
             if inviter_id and not is_referral_awarded(uid):
                 update_balance(inviter_id, 1.5)
                 mark_referral_awarded(uid)
                 try:
-                    inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "Пользователь"
+                    inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М"
                     await bot.send_message(
                         inviter_id,
-                        f"🎉 Вам начислено 1.5 ⭐ за приглашение нового Реферала!\n[{full_name}](tg://user?id={uid})",
+                        f"ЁЯОЙ ╨Т╨░╨╝ ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╛ 1.5 тнР ╨╖╨░ ╨┐╤А╨╕╨│╨╗╨░╤И╨╡╨╜╨╕╨╡ ╨╜╨╛╨▓╨╛╨│╨╛ ╨а╨╡╤Д╨╡╤А╨░╨╗╨░!\n[{full_name}](tg://user?id={uid})",
                         parse_mode="Markdown")
                     await log_to_channel(
-                        f"🎉 **Новый реферал!**\n"
-                        f"Пригласил: [{inviter_name}](tg://user?id={inviter_id})\n"
-                        f"Новый пользователь: [{full_name}](tg://user?id={uid})\n"
-                        f"Начислено: 1.5 ⭐"
+                        f"ЁЯОЙ **╨Э╨╛╨▓╤Л╨╣ ╤А╨╡╤Д╨╡╤А╨░╨╗!**\n"
+                        f"╨Я╤А╨╕╨│╨╗╨░╤Б╨╕╨╗: [{inviter_name}](tg://user?id={inviter_id})\n"
+                        f"╨Э╨╛╨▓╤Л╨╣ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М: [{full_name}](tg://user?id={uid})\n"
+                        f"╨Э╨░╤З╨╕╤Б╨╗╨╡╨╜╨╛: 1.5 тнР"
                     )
                 except:
                     pass
 
         await message.answer(
-            "Ассаламу алейкум 🤍\n\n"
-            "Это бот «Халявная Звезда ⭐️»\n\n"
-            "🔹 Получай звёзды за приглашения\n"
-            "🔹 Обменивай звёзды на подарки 🎁\n"
-            "🔹 Ежедневная Задания!\n\n"
-            "✅ Добро пожаловать!",
+            "╨Р╤Б╤Б╨░╨╗╨░╨╝╤Г ╨░╨╗╨╡╨╣╨║╤Г╨╝ ЁЯдН\n\n"
+            "╨н╤В╨╛ ╨▒╨╛╤В ┬л╨е╨░╨╗╤П╨▓╨╜╨░╤П ╨Ч╨▓╨╡╨╖╨┤╨░ тнРя╕П┬╗\n\n"
+            "ЁЯФ╣ ╨Я╨╛╨╗╤Г╤З╨░╨╣ ╨╖╨▓╤С╨╖╨┤╤Л ╨╖╨░ ╨┐╤А╨╕╨│╨╗╨░╤И╨╡╨╜╨╕╤П\n"
+            "ЁЯФ╣ ╨Ю╨▒╨╝╨╡╨╜╨╕╨▓╨░╨╣ ╨╖╨▓╤С╨╖╨┤╤Л ╨╜╨░ ╨┐╨╛╨┤╨░╤А╨║╨╕ ЁЯОБ\n"
+            "ЁЯФ╣ ╨Х╨╢╨╡╨┤╨╜╨╡╨▓╨╜╨░╤П ╨Ч╨░╨┤╨░╨╜╨╕╤П!\n\n"
+            "тЬЕ ╨Я╨╛╨┤╨┐╨╕╤Б╨║╨░ ╨┐╤А╨╛╨▓╨╡╤А╨╡╨╜╨░! ╨Ф╨╛╨▒╤А╨╛ ╨┐╨╛╨╢╨░╨╗╨╛╨▓╨░╤В╤М!",
             reply_markup=main_menu())
+    else:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
 
 
 @dp.callback_query(F.data == "check_subscription")
 async def process_check_sub(callback: CallbackQuery):
     uid = callback.from_user.id
-    full_name = callback.from_user.full_name or "Пользователь"
+    full_name = callback.from_user.full_name or "╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М"
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await callback.answer("тЭМ ╨Т╤Л ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╜╤Л ╨╜╨░ ╨▓╤Б╨╡ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓!",
+                              show_alert=True)
+        return
 
     if not user_exists(uid):
         add_user(uid, full_name, 3)
-        # Если пришел по рефералке и подписался через кнопку
+        # ╨Х╤Б╨╗╨╕ ╨┐╤А╨╕╤И╨╡╨╗ ╨┐╨╛ ╤А╨╡╤Д╨╡╤А╨░╨╗╨║╨╡ ╨╕ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╤Б╤П ╤З╨╡╤А╨╡╨╖ ╨║╨╜╨╛╨┐╨║╤Г
         inviter_id = get_referral_inviter(uid)
         if inviter_id and not is_referral_awarded(uid):
             update_balance(inviter_id, 1.5)
             mark_referral_awarded(uid)
             try:
-                inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "Пользователь"
+                inviter_name = get_user_info(inviter_id)[1] if get_user_info(inviter_id) else "╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М"
                 await bot.send_message(
                     inviter_id,
-                    f"🎉 Вам начислено 1.5 ⭐ за приглашение нового Реферала!\n[{full_name}](tg://user?id={uid})",
+                    f"ЁЯОЙ ╨Т╨░╨╝ ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╛ 1.5 тнР ╨╖╨░ ╨┐╤А╨╕╨│╨╗╨░╤И╨╡╨╜╨╕╨╡ ╨╜╨╛╨▓╨╛╨│╨╛ ╨а╨╡╤Д╨╡╤А╨░╨╗╨░!\n[{full_name}](tg://user?id={uid})",
                     parse_mode="Markdown")
                 await log_to_channel(
-                    f"🎉 **Новый реферал (проверка подписки)!**\n"
-                    f"Пригласил: [{inviter_name}](tg://user?id={inviter_id})\n"
-                    f"Новый пользователь: [{full_name}](tg://user?id={uid})\n"
-                    f"Начислено: 1.5 ⭐"
+                    f"ЁЯОЙ **╨Э╨╛╨▓╤Л╨╣ ╤А╨╡╤Д╨╡╤А╨░╨╗ (╨┐╤А╨╛╨▓╨╡╤А╨║╨░ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╨╕)!**\n"
+                    f"╨Я╤А╨╕╨│╨╗╨░╤Б╨╕╨╗: [{inviter_name}](tg://user?id={inviter_id})\n"
+                    f"╨Э╨╛╨▓╤Л╨╣ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М: [{full_name}](tg://user?id={uid})\n"
+                    f"╨Э╨░╤З╨╕╤Б╨╗╨╡╨╜╨╛: 1.5 тнР"
                 )
             except:
                 pass
         
-        await log_to_channel(f"✅ **Новый пользователь подтвердил подписку:** [{full_name}](tg://user?id={uid})")
+        await log_to_channel(f"тЬЕ **╨Э╨╛╨▓╤Л╨╣ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╨┐╨╛╨┤╤В╨▓╨╡╤А╨┤╨╕╨╗ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г:** [{full_name}](tg://user?id={uid})")
 
     await callback.message.delete()
-    await bot.send_message(uid, "⭐ Все подписки пройдены!  \n🎯 Доступ к боту активирован.  \n▶️ Нажмите кнопки ниже, чтобы начать использовать функции.",
+    await bot.send_message(uid, "тнР ╨Т╤Б╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╨╕ ╨┐╤А╨╛╨╣╨┤╨╡╨╜╤Л!  \nЁЯОп ╨Ф╨╛╤Б╤В╤Г╨┐ ╨║ ╨▒╨╛╤В╤Г ╨░╨║╤В╨╕╨▓╨╕╤А╨╛╨▓╨░╨╜.  \nтЦ╢я╕П ╨Э╨░╨╢╨╝╨╕╤В╨╡ ╨║╨╜╨╛╨┐╨║╨╕ ╨╜╨╕╨╢╨╡, ╤З╤В╨╛╨▒╤Л ╨╜╨░╤З╨░╤В╤М ╨╕╤Б╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╤М ╤Д╤Г╨╜╨║╤Ж╨╕╨╕.",
                            reply_markup=main_menu())
     await callback.answer()
 
 
-# ===== ПРОФИЛЬ =====
-@dp.message(F.text == "👤 Ваш профиль")
+# ===== ╨Я╨а╨Ю╨д╨Ш╨Ы╨м =====
+@dp.message(F.text == "ЁЯСд ╨Т╨░╤И ╨┐╤А╨╛╤Д╨╕╨╗╤М")
 async def profile(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
+    
     balance = get_user_balance(uid)
     rank = get_user_rank(uid)
-    await message.answer(f"👤 Ваш профиль\n\n"
-                         f"⭐️ Звёзд: {balance}\n"
-                         f"🏆 Ранг: #{rank}",
+    await message.answer(f"ЁЯСд ╨Т╨░╤И ╨┐╤А╨╛╤Д╨╕╨╗╤М\n\n"
+                         f"тнРя╕П ╨Ч╨▓╤С╨╖╨┤: {balance}\n"
+                         f"ЁЯПЖ ╨а╨░╨╜╨│: #{rank}",
                          reply_markup=main_menu())
     
-    await log_to_channel(f"👁️ **Просмотр профиля:** [{message.from_user.full_name}](tg://user?id={uid})")
+    await log_to_channel(f"ЁЯСБя╕П **╨Я╤А╨╛╤Б╨╝╨╛╤В╤А ╨┐╤А╨╛╤Д╨╕╨╗╤П:** [{message.from_user.full_name}](tg://user?id={uid})")
 
 
-# ===== РЕЙТИНГ =====
-@dp.message(F.text == "⭐ Рейтинг")
+# ===== ╨а╨Х╨Щ╨в╨Ш╨Э╨У =====
+@dp.message(F.text == "тнР ╨а╨╡╨╣╤В╨╕╨╜╨│")
 async def rating(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
     
     top_users = get_top_users(10)
     
     if not top_users:
-        await message.answer("❌ Рейтинг пуст", reply_markup=main_menu())
+        await message.answer("тЭМ ╨а╨╡╨╣╤В╨╕╨╜╨│ ╨┐╤Г╤Б╤В", reply_markup=main_menu())
         return
     
-    # Создаём кнопки с топ-10
+    # ╨б╨╛╨╖╨┤╨░╤С╨╝ ╨║╨╜╨╛╨┐╨║╨╕ ╤Б ╤В╨╛╨┐-10
     keyboard = []
     for i, (user_id, name, balance) in enumerate(top_users, 1):
-        button_text = f"{i}. {name} - {balance} ⭐"
+        button_text = f"{i}. {name} - {balance} тнР"
         keyboard.append([InlineKeyboardButton(text=button_text, callback_data=f"profile_{user_id}")])
     
     rating_kb = InlineKeyboardMarkup(inline_keyboard=keyboard)
     
-    await message.answer("🏆 *ТОП-10 АКТИВНЫХ ПОЛЬЗОВАТЕЛЕЙ* 🏆\n\nНажмите на имя чтобы перейти на его профиль:", 
+    await message.answer("ЁЯПЖ *╨в╨Ю╨Я-10 ╨Р╨Ъ╨в╨Ш╨Т╨Э╨л╨е ╨Я╨Ю╨Ы╨м╨Ч╨Ю╨Т╨Р╨в╨Х╨Ы╨Х╨Щ* ЁЯПЖ\n\n╨Э╨░╨╢╨╝╨╕╤В╨╡ ╨╜╨░ ╨╕╨╝╤П ╤З╤В╨╛╨▒╤Л ╨┐╨╡╤А╨╡╨╣╤В╨╕ ╨╜╨░ ╨╡╨│╨╛ ╨┐╤А╨╛╤Д╨╕╨╗╤М:", 
                         parse_mode="Markdown",
                         reply_markup=rating_kb)
     
-    await log_to_channel(f"📊 **Просмотр рейтинга:** [{message.from_user.full_name}](tg://user?id={uid})")
+    await log_to_channel(f"ЁЯУК **╨Я╤А╨╛╤Б╨╝╨╛╤В╤А ╤А╨╡╨╣╤В╨╕╨╜╨│╨░:** [{message.from_user.full_name}](tg://user?id={uid})")
 
 
 @dp.callback_query(F.data.startswith("profile_"))
@@ -268,107 +311,120 @@ async def view_user_profile(callback: CallbackQuery):
     
     user_info = get_user_info(target_user_id)
     if not user_info:
-        await callback.answer("❌ Пользователь не найден", show_alert=True)
+        await callback.answer("тЭМ ╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╨╜╨╡ ╨╜╨░╨╣╨┤╨╡╨╜", show_alert=True)
         return
     
     user_id, user_name, balance = user_info
     rank = get_user_rank(user_id)
     
-    text = f"👤 *Профиль пользователя*\n\n" \
-           f"Имя: {user_name}\n" \
-           f"⭐ Звёзд: {balance}\n" \
-           f"🏆 Ранг: #{rank}"
+    text = f"ЁЯСд *╨Я╤А╨╛╤Д╨╕╨╗╤М ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П*\n\n" \
+           f"╨Ш╨╝╤П: {user_name}\n" \
+           f"тнР ╨Ч╨▓╤С╨╖╨┤: {balance}\n" \
+           f"ЁЯПЖ ╨а╨░╨╜╨│: #{rank}"
     
     await callback.message.edit_text(text, parse_mode="Markdown")
     
-    # Логирование просмотра профиля
-    await log_to_channel(f"👁️ **Просмотр профиля пользователя:** [{callback.from_user.full_name}](tg://user?id={current_user_id}) смотрит профиль [{user_name}](tg://user?id={target_user_id})")
+    # ╨Ы╨╛╨│╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╨┐╤А╨╛╤Б╨╝╨╛╤В╤А╨░ ╨┐╤А╨╛╤Д╨╕╨╗╤П
+    await log_to_channel(f"ЁЯСБя╕П **╨Я╤А╨╛╤Б╨╝╨╛╤В╤А ╨┐╤А╨╛╤Д╨╕╨╗╤П ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П:** [{callback.from_user.full_name}](tg://user?id={current_user_id}) ╤Б╨╝╨╛╤В╤А╨╕╤В ╨┐╤А╨╛╤Д╨╕╨╗╤М [{user_name}](tg://user?id={target_user_id})")
 
 
-# ===== ПРИГЛАСИТЬ =====
-@dp.message(F.text == "📢 Пригласить")
+# ===== ╨Я╨а╨Ш╨У╨Ы╨Р╨б╨Ш╨в╨м =====
+@dp.message(F.text == "ЁЯУв ╨Я╤А╨╕╨│╨╗╨░╤Б╨╕╤В╤М")
 async def invite(message: Message):
     uid = message.from_user.id
     
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
     ref_link = f"https://t.me/{BOT_USERNAME}?start={uid}"
     await message.answer(
-        f"Ваша реферальная ссылка 🔗\n`{ref_link}`\n\n"
-        "За каждого приглашённого друга вы получите 1.5 ⭐",
+        f"╨Т╨░╤И╨░ ╤А╨╡╤Д╨╡╤А╨░╨╗╤М╨╜╨░╤П ╤Б╤Б╤Л╨╗╨║╨░ ЁЯФЧ\n`{ref_link}`\n\n"
+        "╨Ч╨░ ╨║╨░╨╢╨┤╨╛╨│╨╛ ╨┐╤А╨╕╨│╨╗╨░╤И╤С╨╜╨╜╨╛╨│╨╛ ╨┤╤А╤Г╨│╨░ ╨▓╤Л ╨┐╨╛╨╗╤Г╤З╨╕╤В╨╡ 1.5 тнР",
         parse_mode="Markdown",
         reply_markup=main_menu())
     
-    await log_to_channel(f"🔗 **Просмотр реф. ссылки:** [{message.from_user.full_name}](tg://user?id={uid})")
+    await log_to_channel(f"ЁЯФЧ **╨Я╤А╨╛╤Б╨╝╨╛╤В╤А ╤А╨╡╤Д. ╤Б╤Б╤Л╨╗╨║╨╕:** [{message.from_user.full_name}](tg://user?id={uid})")
 
 
-# ===== ОБМЕН ПОДАРКОВ =====
+# ===== ╨Ю╨С╨Ь╨Х╨Э ╨Я╨Ю╨Ф╨Р╨а╨Ъ╨Ю╨Т =====
 GIFTS_DATA = {
-    "15 ⭐": {
+    "15 тнР": {
         "cost": 15,
-        "items": ["💝", "🧸"]
+        "items": ["ЁЯТЭ", "ЁЯз╕"]
     },
-    "25 ⭐": {
+    "25 тнР": {
         "cost": 25,
-        "items": ["🌹", "🎁"]
+        "items": ["ЁЯМ╣", "ЁЯОБ"]
     },
-    "50 ⭐": {
+    "50 тнР": {
         "cost": 50,
-        "items": ["💐", "🎂", "🚀"]
+        "items": ["ЁЯТР", "ЁЯОВ", "ЁЯЪА"]
     },
-    "100 ⭐": {
+    "100 тнР": {
         "cost": 100,
-        "items": ["🏆", "💍", "💎"]
+        "items": ["ЁЯПЖ", "ЁЯТН", "ЁЯТО"]
     }
 }
 
 
-@dp.message(F.text == "🎁 Обменять подарок")
+@dp.message(F.text == "ЁЯОБ ╨Ю╨▒╨╝╨╡╨╜╤П╤В╤М ╨┐╨╛╨┤╨░╤А╨╛╨║")
 async def start_exchange(message: Message, state: FSMContext):
     uid = message.from_user.id
     
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
+    
     kb = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text="15 ⭐"),
-                   KeyboardButton(text="25 ⭐")],
-                  [KeyboardButton(text="50 ⭐"),
-                   KeyboardButton(text="100 ⭐")],
-                  [KeyboardButton(text="🔙 Назад в меню")]],
+        keyboard=[[KeyboardButton(text="15 тнР"),
+                   KeyboardButton(text="25 тнР")],
+                  [KeyboardButton(text="50 тнР"),
+                   KeyboardButton(text="100 тнР")],
+                  [KeyboardButton(text="ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О")]],
         resize_keyboard=True)
-    await message.answer("Выберите сумму звёзд для обмена:", reply_markup=kb)
+    await message.answer("╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╤Б╤Г╨╝╨╝╤Г ╨╖╨▓╤С╨╖╨┤ ╨┤╨╗╤П ╨╛╨▒╨╝╨╡╨╜╨░:", reply_markup=kb)
     await state.set_state(GiftExchange.choosing_tier)
 
 
 @dp.message(GiftExchange.choosing_tier)
 async def choose_tier(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Возвращаюсь...", reply_markup=main_menu())
+        await message.answer("╨Т╨╛╨╖╨▓╤А╨░╤Й╨░╤О╤Б╤М...", reply_markup=main_menu())
         return
 
     if message.text not in GIFTS_DATA:
-        await message.answer("❌ Выберите вариант из кнопок")
+        await message.answer("тЭМ ╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╨▓╨░╤А╨╕╨░╨╜╤В ╨╕╨╖ ╨║╨╜╨╛╨┐╨╛╨║")
         return
 
     tier = GIFTS_DATA[message.text]
     uid = message.from_user.id
     balance = get_user_balance(uid)
     if balance < tier["cost"]:
-        await message.answer("❌ Недостаточно ⭐ на балансе")
+        await message.answer("тЭМ ╨Э╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ тнР ╨╜╨░ ╨▒╨░╨╗╨░╨╜╤Б╨╡")
         return
 
     await state.update_data(cost=tier["cost"], tier_name=message.text)
 
     buttons = [[KeyboardButton(text=item)] for item in tier["items"]]
-    buttons.append([KeyboardButton(text="🔙 Назад в меню")])
+    buttons.append([KeyboardButton(text="ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О")])
 
     kb = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
-    await message.answer("Выберите подарок:", reply_markup=kb)
+    await message.answer("╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╨┐╨╛╨┤╨░╤А╨╛╨║:", reply_markup=kb)
     await state.set_state(GiftExchange.choosing_gift)
 
 
 @dp.message(GiftExchange.choosing_gift)
 async def finalize_exchange(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Возвращаюсь...", reply_markup=main_menu())
+        await message.answer("╨Т╨╛╨╖╨▓╤А╨░╤Й╨░╤О╤Б╤М...", reply_markup=main_menu())
         return
 
     data = await state.get_data()
@@ -380,20 +436,20 @@ async def finalize_exchange(message: Message, state: FSMContext):
     add_gift_request(uid, gift_name, cost)
 
     await message.answer(
-        f"✅ Ваша заявка отправлена админу на обмен подарка {gift_name}.\n"
-        f"⏳ В течение 12ч вам отправим {gift_name}",
+        f"тЬЕ ╨Т╨░╤И╨░ ╨╖╨░╤П╨▓╨║╨░ ╨╛╤В╨┐╤А╨░╨▓╨╗╨╡╨╜╨░ ╨░╨┤╨╝╨╕╨╜╤Г ╨╜╨░ ╨╛╨▒╨╝╨╡╨╜ ╨┐╨╛╨┤╨░╤А╨║╨░ {gift_name}.\n"
+        f"тП│ ╨Т ╤В╨╡╤З╨╡╨╜╨╕╨╡ 12╤З ╨▓╨░╨╝ ╨╛╤В╨┐╤А╨░╨▓╨╕╨╝ {gift_name}",
         reply_markup=main_menu())
 
-    # Кнопка для админа
+    # ╨Ъ╨╜╨╛╨┐╨║╨░ ╨┤╨╗╤П ╨░╨┤╨╝╨╕╨╜╨░
     admin_kb = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="Отправил ✅",
+        InlineKeyboardButton(text="╨Ю╤В╨┐╤А╨░╨▓╨╕╨╗ тЬЕ",
                              callback_data=f"gift_{uid}_{gift_name}")
     ]])
 
     try:
-        await bot.send_message(ADMIN_ID, f"🎁 *Новая заявка на подарок!*\n"
-                               f"Пользователь: [ссылка](tg://user?id={uid})\n"
-                               f"Выбрал: {gift_name} (за {cost} ⭐)",
+        await bot.send_message(ADMIN_ID, f"ЁЯОБ *╨Э╨╛╨▓╨░╤П ╨╖╨░╤П╨▓╨║╨░ ╨╜╨░ ╨┐╨╛╨┤╨░╤А╨╛╨║!*\n"
+                               f"╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М: [╤Б╤Б╤Л╨╗╨║╨░](tg://user?id={uid})\n"
+                               f"╨Т╤Л╨▒╤А╨░╨╗: {gift_name} (╨╖╨░ {cost} тнР)",
                                parse_mode="Markdown",
                                reply_markup=admin_kb)
     except Exception:
@@ -402,37 +458,44 @@ async def finalize_exchange(message: Message, state: FSMContext):
     await state.clear()
 
 
-# ===== ЗАДАНИЕ ДНЯ =====
-@dp.message(F.text == "🎯 Ежедневное Задание")
+# ===== ╨Ч╨Р╨Ф╨Р╨Э╨Ш╨Х ╨Ф╨Э╨п =====
+@dp.message(F.text == "ЁЯОп ╨Х╨╢╨╡╨┤╨╜╨╡╨▓╨╜╨╛╨╡ ╨Ч╨░╨┤╨░╨╜╨╕╨╡")
 async def daily_task(message: Message):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
     
     sponsors = get_active_sponsors()
     
     if not sponsors:
-        await message.answer("❌ На данный момент заданий нет", reply_markup=main_menu())
+        await message.answer("тЭМ ╨Э╨░ ╨┤╨░╨╜╨╜╤Л╨╣ ╨╝╨╛╨╝╨╡╨╜╤В ╨╖╨░╨┤╨░╨╜╨╕╨╣ ╨╜╨╡╤В", reply_markup=main_menu())
         return
     
-    # Берём первого активного спонсора
+    # ╨С╨╡╤А╤С╨╝ ╨┐╨╡╤А╨▓╨╛╨│╨╛ ╨░╨║╤В╨╕╨▓╨╜╨╛╨│╨╛ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░
     sponsor_id, sponsor_name = sponsors[0]
     task_id = get_or_create_task(sponsor_id, sponsor_name)
     
     if is_task_completed_today(uid, task_id):
         await message.answer(
-            "✅ Вы уже выполнили задание на сегодня!\n\n"
-            "Приходите завтра для нового задания 🌙",
+            "тЬЕ ╨Т╤Л ╤Г╨╢╨╡ ╨▓╤Л╨┐╨╛╨╗╨╜╨╕╨╗╨╕ ╨╖╨░╨┤╨░╨╜╨╕╨╡ ╨╜╨░ ╤Б╨╡╨│╨╛╨┤╨╜╤П!\n\n"
+            "╨Я╤А╨╕╤Е╨╛╨┤╨╕╤В╨╡ ╨╖╨░╨▓╤В╤А╨░ ╨┤╨╗╤П ╨╜╨╛╨▓╨╛╨│╨╛ ╨╖╨░╨┤╨░╨╜╨╕╤П ЁЯМЩ",
             reply_markup=main_menu())
         return
     
-    # Показываем задание
+    # ╨Я╨╛╨║╨░╨╖╤Л╨▓╨░╨╡╨╝ ╨╖╨░╨┤╨░╨╜╨╕╨╡
     task_kb = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="✅ Выполнил задание", callback_data=f"check_task_{task_id}_{sponsor_id}_{sponsor_name}")
+        InlineKeyboardButton(text="тЬЕ ╨Т╤Л╨┐╨╛╨╗╨╜╨╕╨╗ ╨╖╨░╨┤╨░╨╜╨╕╨╡", callback_data=f"check_task_{task_id}_{sponsor_id}_{sponsor_name}")
     ]])
     
     await message.answer(
-        f"🎯 *Задание на сегодня:*\n\n"
-        f"Подпишитесь на канал: *{sponsor_name}*\n\n"
-        f"После подписки нажмите кнопку ниже ⬇️",
+        f"ЁЯОп *╨Ч╨░╨┤╨░╨╜╨╕╨╡ ╨╜╨░ ╤Б╨╡╨│╨╛╨┤╨╜╤П:*\n\n"
+        f"╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╜╨░ ╨║╨░╨╜╨░╨╗: *{sponsor_name}*\n\n"
+        f"╨Я╨╛╤Б╨╗╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ╨║╨╜╨╛╨┐╨║╤Г ╨╜╨╕╨╢╨╡ тмЗя╕П",
         parse_mode="Markdown",
         reply_markup=task_kb)
 
@@ -444,63 +507,63 @@ async def check_task_completion(callback: CallbackQuery):
     sponsor_id = int(sponsor_id)
     uid = callback.from_user.id
     
-    # Проверяем подписку на канал спонсора
+    # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г ╨╜╨░ ╨║╨░╨╜╨░╨╗ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░
     try:
         member = await bot.get_chat_member(sponsor_name, uid)
         if member.status not in ["member", "administrator", "creator"]:
-            await callback.answer("❌ Вы не подписаны на канал спонсора!", show_alert=True)
+            await callback.answer("тЭМ ╨Т╤Л ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╜╤Л ╨╜╨░ ╨║╨░╨╜╨░╨╗ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░!", show_alert=True)
             return
     except Exception:
-        await callback.answer("❌ Ошибка проверки подписки", show_alert=True)
+        await callback.answer("тЭМ ╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╕ ╨┐╨╛╨┤╨┐╨╕╤Б╨║╨╕", show_alert=True)
         return
     
-    # Генерируем награду
+    # ╨У╨╡╨╜╨╡╤А╨╕╤А╤Г╨╡╨╝ ╨╜╨░╨│╤А╨░╨┤╤Г
     reward = generate_reward()
     
-    # Отмечаем задание как выполненное
+    # ╨Ю╤В╨╝╨╡╤З╨░╨╡╨╝ ╨╖╨░╨┤╨░╨╜╨╕╨╡ ╨║╨░╨║ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╨╜╨╛╨╡
     mark_task_completed(uid, task_id)
     update_balance(uid, reward)
     
     await callback.message.delete()
     await callback.message.answer(
-        f"🎉 *Спасибо за выполнение задания!*\n\n"
-        f"✅ Вы подписались на {sponsor_name}\n"
-        f"⭐ Вам начислено: *{reward}* звёзд\n\n"
-        f"Приходите завтра для нового задания!",
+        f"ЁЯОЙ *╨б╨┐╨░╤Б╨╕╨▒╨╛ ╨╖╨░ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╨╕╨╡ ╨╖╨░╨┤╨░╨╜╨╕╤П!*\n\n"
+        f"тЬЕ ╨Т╤Л ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ {sponsor_name}\n"
+        f"тнР ╨Т╨░╨╝ ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╛: *{reward}* ╨╖╨▓╤С╨╖╨┤\n\n"
+        f"╨Я╤А╨╕╤Е╨╛╨┤╨╕╤В╨╡ ╨╖╨░╨▓╤В╤А╨░ ╨┤╨╗╤П ╨╜╨╛╨▓╨╛╨│╨╛ ╨╖╨░╨┤╨░╨╜╨╕╤П!",
         parse_mode="Markdown",
         reply_markup=main_menu())
     
-    await callback.answer("✅ Задание выполнено!")
+    await callback.answer("тЬЕ ╨Ч╨░╨┤╨░╨╜╨╕╨╡ ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╨╛!")
 
 
 def generate_reward():
-    """Генерировать случайную награду за задание"""
+    """╨У╨╡╨╜╨╡╤А╨╕╤А╨╛╨▓╨░╤В╤М ╤Б╨╗╤Г╤З╨░╨╣╨╜╤Г╤О ╨╜╨░╨│╤А╨░╨┤╤Г ╨╖╨░ ╨╖╨░╨┤╨░╨╜╨╕╨╡"""
     rand = random.random()
     
-    if rand < 0.01:  # 1% - 1 звезда
+    if rand < 0.01:  # 1% - 1 ╨╖╨▓╨╡╨╖╨┤╨░
         return 1.0
-    elif rand < 0.15:  # 14% - от 0.80 до 0.99
+    elif rand < 0.15:  # 14% - ╨╛╤В 0.80 ╨┤╨╛ 0.99
         return round(random.uniform(0.80, 0.99), 2)
-    else:  # 85% - от 0.10 до 0.80
+    else:  # 85% - ╨╛╤В 0.10 ╨┤╨╛ 0.80
         return round(random.uniform(0.10, 0.80), 2)
 
 
-# ===== АДМИН ПАНЕЛЬ (РАССЫЛКА) =====
+# ===== ╨Р╨Ф╨Ь╨Ш╨Э ╨Я╨Р╨Э╨Х╨Ы╨м (╨а╨Р╨б╨б╨л╨Ы╨Ъ╨Р) =====
 @dp.message(Command("broadcast"))
 async def start_broadcast(message: Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
         return
     await message.answer(
-        "Введите текст рекламы/сообщения для всех пользователей:",
+        "╨Т╨▓╨╡╨┤╨╕╤В╨╡ ╤В╨╡╨║╤Б╤В ╤А╨╡╨║╨╗╨░╨╝╤Л/╤Б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╤П ╨┤╨╗╤П ╨▓╤Б╨╡╤Е ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╡╨╣:",
         reply_markup=back_kb())
     await state.set_state(AdminBroadcast.message)
 
 
 @dp.message(AdminBroadcast.message)
 async def process_broadcast(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Отменено.", reply_markup=main_menu())
+        await message.answer("╨Ю╤В╨╝╨╡╨╜╨╡╨╜╨╛.", reply_markup=main_menu())
         return
 
     count = 0
@@ -514,22 +577,22 @@ async def process_broadcast(message: Message, state: FSMContext):
             pass
 
     await message.answer(
-        f"✅ Рассылка завершена! Получили: {count} пользователей.",
+        f"тЬЕ ╨а╨░╤Б╤Б╤Л╨╗╨║╨░ ╨╖╨░╨▓╨╡╤А╤И╨╡╨╜╨░! ╨Я╨╛╨╗╤Г╤З╨╕╨╗╨╕: {count} ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╡╨╣.",
         reply_markup=main_menu())
     await state.clear()
 
 
-# ===== АДМИН КОМАНДЫ ДЛЯ СПОНСОРОВ =====
+# ===== ╨Р╨Ф╨Ь╨Ш╨Э ╨Ъ╨Ю╨Ь╨Р╨Э╨Ф╨л ╨Ф╨Ы╨п ╨б╨Я╨Ю╨Э╨б╨Ю╨а╨Ю╨Т =====
 
 @dp.message(Command("addsponsor"))
 async def add_sponsor_cmd(message: Message, state: FSMContext):
-    """Добавить спонсора с временным сроком: /addsponsor @channel 24h"""
+    """╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░ ╤Б ╨▓╤А╨╡╨╝╨╡╨╜╨╜╤Л╨╝ ╤Б╤А╨╛╨║╨╛╨╝: /addsponsor @channel 24h"""
     if message.from_user.id != ADMIN_ID:
         return
     
     args = message.text.split()
     if len(args) != 3:
-        await message.answer("❌ Формат: /addsponsor @канал время\n\nПримеры времени: 1h, 24h, 7d, 30d")
+        await message.answer("тЭМ ╨д╨╛╤А╨╝╨░╤В: /addsponsor @╨║╨░╨╜╨░╨╗ ╨▓╤А╨╡╨╝╤П\n\n╨Я╤А╨╕╨╝╨╡╤А╤Л ╨▓╤А╨╡╨╝╨╡╨╜╨╕: 1h, 24h, 7d, 30d")
         return
     
     channel_name = args[1]
@@ -537,174 +600,182 @@ async def add_sponsor_cmd(message: Message, state: FSMContext):
     
     sponsor_id = add_sponsor(channel_name, message.from_user.id)
     if sponsor_id is None:
-        await message.answer(f"❌ Спонсор {channel_name} уже добавлен")
+        await message.answer(f"тЭМ ╨б╨┐╨╛╨╜╤Б╨╛╤А {channel_name} ╤Г╨╢╨╡ ╨┤╨╛╨▒╨░╨▓╨╗╨╡╨╜")
         return
     
     await message.answer(
-        f"✅ Спонсор добавлен!\n\n"
-        f"Канал: {channel_name}\n"
-        f"Срок: {duration}\n\n"
-        f"Пользователи смогут выполнять задание на этот канал в течение {duration}.")
+        f"тЬЕ ╨б╨┐╨╛╨╜╤Б╨╛╤А ╨┤╨╛╨▒╨░╨▓╨╗╨╡╨╜!\n\n"
+        f"╨Ъ╨░╨╜╨░╨╗: {channel_name}\n"
+        f"╨б╤А╨╛╨║: {duration}\n\n"
+        f"╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╕ ╤Б╨╝╨╛╨│╤Г╤В ╨▓╤Л╨┐╨╛╨╗╨╜╤П╤В╤М ╨╖╨░╨┤╨░╨╜╨╕╨╡ ╨╜╨░ ╤Н╤В╨╛╤В ╨║╨░╨╜╨░╨╗ ╨▓ ╤В╨╡╤З╨╡╨╜╨╕╨╡ {duration}.")
 
 
 @dp.message(Command("addsponsorfree"))
 async def add_sponsor_free_cmd(message: Message, state: FSMContext):
-    """Добавить постоянного спонсора: /addsponsorfree @channel"""
+    """╨Ф╨╛╨▒╨░╨▓╨╕╤В╤М ╨┐╨╛╤Б╤В╨╛╤П╨╜╨╜╨╛╨│╨╛ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░: /addsponsorfree @channel"""
     if message.from_user.id != ADMIN_ID:
         return
     
     args = message.text.split()
     if len(args) != 2:
-        await message.answer("❌ Формат: /addsponsorfree @канал")
+        await message.answer("тЭМ ╨д╨╛╤А╨╝╨░╤В: /addsponsorfree @╨║╨░╨╜╨░╨╗")
         return
     
     channel_name = args[1]
     
     sponsor_id = add_sponsor(channel_name, message.from_user.id)
     if sponsor_id is None:
-        await message.answer(f"❌ Спонсор {channel_name} уже добавлен")
+        await message.answer(f"тЭМ ╨б╨┐╨╛╨╜╤Б╨╛╤А {channel_name} ╤Г╨╢╨╡ ╨┤╨╛╨▒╨░╨▓╨╗╨╡╨╜")
         return
     
     await message.answer(
-        f"✅ Постоянный спонсор добавлен!\n\n"
-        f"Канал: {channel_name}\n\n"
-        f"Пользователи будут выполнять задания на этот канал")
+        f"тЬЕ ╨Я╨╛╤Б╤В╨╛╤П╨╜╨╜╤Л╨╣ ╤Б╨┐╨╛╨╜╤Б╨╛╤А ╨┤╨╛╨▒╨░╨▓╨╗╨╡╨╜!\n\n"
+        f"╨Ъ╨░╨╜╨░╨╗: {channel_name}\n\n"
+        f"╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╕ ╨▒╤Г╨┤╤Г╤В ╨▓╤Л╨┐╨╛╨╗╨╜╤П╤В╤М ╨╖╨░╨┤╨░╨╜╨╕╤П ╨╜╨░ ╤Н╤В╨╛╤В ╨║╨░╨╜╨░╨╗")
 
 
 @dp.message(Command("removesponsor"))
 async def remove_sponsor_cmd(message: Message, state: FSMContext):
-    """Удалить спонсора: /removesponsor @channel"""
+    """╨г╨┤╨░╨╗╨╕╤В╤М ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨░: /removesponsor @channel"""
     if message.from_user.id != ADMIN_ID:
         return
     
     args = message.text.split()
     if len(args) != 2:
-        await message.answer("❌ Формат: /removesponsor @канал")
+        await message.answer("тЭМ ╨д╨╛╤А╨╝╨░╤В: /removesponsor @╨║╨░╨╜╨░╨╗")
         return
     
     channel_name = args[1]
     remove_sponsor(channel_name)
     
-    await message.answer(f"✅ Спонсор {channel_name} удален")
+    await message.answer(f"тЬЕ ╨б╨┐╨╛╨╜╤Б╨╛╤А {channel_name} ╤Г╨┤╨░╨╗╨╡╨╜")
 
 
 @dp.message(Command("sponsors"))
 async def list_sponsors_cmd(message: Message):
-    """Показать список активных спонсоров"""
+    """╨Я╨╛╨║╨░╨╖╨░╤В╤М ╤Б╨┐╨╕╤Б╨╛╨║ ╨░╨║╤В╨╕╨▓╨╜╤Л╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓"""
     if message.from_user.id != ADMIN_ID:
         return
     
     sponsors = get_active_sponsors()
     if not sponsors:
-        await message.answer("❌ Активных спонсоров нет")
+        await message.answer("тЭМ ╨Р╨║╤В╨╕╨▓╨╜╤Л╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓ ╨╜╨╡╤В")
         return
     
-    text = "📋 *Активные спонсоры:*\n\n"
+    text = "ЁЯУЛ *╨Р╨║╤В╨╕╨▓╨╜╤Л╨╡ ╤Б╨┐╨╛╨╜╤Б╨╛╤А╤Л:*\n\n"
     for i, (sponsor_id, channel_name) in enumerate(sponsors, 1):
         text += f"{i}. {channel_name}\n"
     
     await message.answer(text, parse_mode="Markdown")
 
 
-# ===== ПОМОЩЬ =====
-@dp.message(F.text == "🆘 Помощь")
+# ===== ╨Я╨Ю╨Ь╨Ю╨й╨м =====
+@dp.message(F.text == "ЁЯЖШ ╨Я╨╛╨╝╨╛╤Й╤М")
 async def help_cmd(message: Message, state: FSMContext):
-    await message.answer("Напишите вашу проблему, мы скоро её решим:",
+    await message.answer("╨Э╨░╨┐╨╕╤И╨╕╤В╨╡ ╨▓╨░╤И╤Г ╨┐╤А╨╛╨▒╨╗╨╡╨╝╤Г, ╨╝╤Л ╤Б╨║╨╛╤А╨╛ ╨╡╤С ╤А╨╡╤И╨╕╨╝:",
                          reply_markup=back_kb())
     await state.set_state(HelpFlow.message)
 
 
 @dp.message(HelpFlow.message)
 async def process_help(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Возвращаюсь...", reply_markup=main_menu())
+        await message.answer("╨Т╨╛╨╖╨▓╤А╨░╤Й╨░╤О╤Б╤М...", reply_markup=main_menu())
         return
 
     uid = message.from_user.id
 
-    # Уведомление админу
+    # ╨г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╨╡ ╨░╨┤╨╝╨╕╨╜╤Г
     admin_kb = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="Ответить 💬", callback_data=f"reply_{uid}")
+        InlineKeyboardButton(text="╨Ю╤В╨▓╨╡╤В╨╕╤В╤М ЁЯТм", callback_data=f"reply_{uid}")
     ]])
 
     try:
-        await bot.send_message(ADMIN_ID, f"🆘 *Новое обращение в поддержку!*\n"
-                               f"От: [ссылка](tg://user?id={uid})\n"
-                               f"Сообщение: {message.text}",
+        await bot.send_message(ADMIN_ID, f"ЁЯЖШ *╨Э╨╛╨▓╨╛╨╡ ╨╛╨▒╤А╨░╤Й╨╡╨╜╨╕╨╡ ╨▓ ╨┐╨╛╨┤╨┤╨╡╤А╨╢╨║╤Г!*\n"
+                               f"╨Ю╤В: [╤Б╤Б╤Л╨╗╨║╨░](tg://user?id={uid})\n"
+                               f"╨б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╨╡: {message.text}",
                                parse_mode="Markdown",
                                reply_markup=admin_kb)
     except Exception:
         pass
 
     await message.answer(
-        "✅ Ваше сообщение отправлено администратору. Ожидайте ответа.",
+        "тЬЕ ╨Т╨░╤И╨╡ ╤Б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╨╡ ╨╛╤В╨┐╤А╨░╨▓╨╗╨╡╨╜╨╛ ╨░╨┤╨╝╨╕╨╜╨╕╤Б╤В╤А╨░╤В╨╛╤А╤Г. ╨Ю╨╢╨╕╨┤╨░╨╣╤В╨╡ ╨╛╤В╨▓╨╡╤В╨░.",
         reply_markup=main_menu())
     await state.clear()
 
 
-# ===== ВВЕСТИ ЗВЁЗДЫ =====
-@dp.message(F.text == "⭐ Ввести")
+# ===== ╨Т╨Т╨Х╨б╨в╨Ш ╨Ч╨Т╨Б╨Ч╨Ф╨л =====
+@dp.message(F.text == "тнР ╨Т╨▓╨╡╤Б╤В╨╕")
 async def enter_stars(message: Message, state: FSMContext):
     uid = message.from_user.id
+    
+    is_subscribed = await check_all_subs(uid)
+    if not is_subscribed:
+        await message.answer(
+            "тЪая╕П ╨Т╤Л ╨╡╤Й╤С ╨╜╨╡ ╨┐╨╛╨┤╨┐╨╕╤Б╨░╨╗╨╕╤Б╤М ╨╜╨░ ╨▓╤Б╨╡╤Е ╤Б╨┐╨╛╨╜╤Б╨╛╤А╨╛╨▓. \nтЬЕ╨Я╨╛╨┤╨┐╨╕╤И╨╕╤В╨╡╤Б╤М ╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ┬л╨Я╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╨╛╨┤╨┐╨╕╤Б╨║╤Г┬╗ ╤Б╨╜╨╛╨▓╨░.",
+            reply_markup=sub_inline_kb())
+        return
+    
     balance = get_user_balance(uid)
 
     if balance < 50:
         await message.answer(
-            f"❌ На вашем балансе недостаточно звёзд для ввода — минимальный ввод от 50⭐\n\n"
-            f"Ваш баланс: {balance} ⭐",
+            f"тЭМ ╨Э╨░ ╨▓╨░╤И╨╡╨╝ ╨▒╨░╨╗╨░╨╜╤Б╨╡ ╨╜╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ ╨╖╨▓╤С╨╖╨┤ ╨┤╨╗╤П ╨▓╨▓╨╛╨┤╨░ тАФ ╨╝╨╕╨╜╨╕╨╝╨░╨╗╤М╨╜╤Л╨╣ ╨▓╨▓╨╛╨┤ ╨╛╤В 50тнР\n\n"
+            f"╨Т╨░╤И ╨▒╨░╨╗╨░╨╜╤Б: {balance} тнР",
             reply_markup=main_menu())
         return
 
     await message.answer(
-        f"Ваш баланс: {balance} ⭐️\n"
-        "Введите количество звезд для списания:",
+        f"╨Т╨░╤И ╨▒╨░╨╗╨░╨╜╤Б: {balance} тнРя╕П\n"
+        "╨Т╨▓╨╡╨┤╨╕╤В╨╡ ╨║╨╛╨╗╨╕╤З╨╡╤Б╤В╨▓╨╛ ╨╖╨▓╨╡╨╖╨┤ ╨┤╨╗╤П ╤Б╨┐╨╕╤Б╨░╨╜╨╕╤П:",
         reply_markup=back_kb())
     await state.set_state(EnterStarsFlow.amount)
 
 
 @dp.message(EnterStarsFlow.amount)
 async def process_enter_amount(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Возвращаюсь...", reply_markup=main_menu())
+        await message.answer("╨Т╨╛╨╖╨▓╤А╨░╤Й╨░╤О╤Б╤М...", reply_markup=main_menu())
         return
 
     uid = message.from_user.id
     try:
         amount = float(message.text)
     except ValueError:
-        await message.answer("❌ Пожалуйста, введите число!")
+        await message.answer("тЭМ ╨Я╨╛╨╢╨░╨╗╤Г╨╣╤Б╤В╨░, ╨▓╨▓╨╡╨┤╨╕╤В╨╡ ╤З╨╕╤Б╨╗╨╛!")
         return
 
     if amount < 50:
         await message.answer(
-            "❌ Минимальный ввод от 50⭐. Попробуйте еще раз или нажмите Назад.")
+            "тЭМ ╨Ь╨╕╨╜╨╕╨╝╨░╨╗╤М╨╜╤Л╨╣ ╨▓╨▓╨╛╨┤ ╨╛╤В 50тнР. ╨Я╨╛╨┐╤А╨╛╨▒╤Г╨╣╤В╨╡ ╨╡╤Й╨╡ ╤А╨░╨╖ ╨╕╨╗╨╕ ╨╜╨░╨╢╨╝╨╕╤В╨╡ ╨Э╨░╨╖╨░╨┤.")
         return
 
     balance = get_user_balance(uid)
     if amount > balance:
         await message.answer(
-            f"❌ На вашем балансе недостаточно звёзд. Ваш баланс: {balance} ⭐")
+            f"тЭМ ╨Э╨░ ╨▓╨░╤И╨╡╨╝ ╨▒╨░╨╗╨░╨╜╤Б╨╡ ╨╜╨╡╨┤╨╛╤Б╤В╨░╤В╨╛╤З╨╜╨╛ ╨╖╨▓╤С╨╖╨┤. ╨Т╨░╤И ╨▒╨░╨╗╨░╨╜╤Б: {balance} тнР")
         return
 
     update_balance(uid, -amount)
     add_star_input_request(uid, amount)
 
     await message.answer(
-        f"✅ Ваша заявка отправлена админу на ввод {amount} ⭐.\n"
-        f"⏳ В течение 24ч вам начислят {amount} ⭐.",
+        f"тЬЕ ╨Т╨░╤И╨░ ╨╖╨░╤П╨▓╨║╨░ ╨╛╤В╨┐╤А╨░╨▓╨╗╨╡╨╜╨░ ╨░╨┤╨╝╨╕╨╜╤Г ╨╜╨░ ╨▓╨▓╨╛╨┤ {amount} тнР.\n"
+        f"тП│ ╨Т ╤В╨╡╤З╨╡╨╜╨╕╨╡ 24╤З ╨▓╨░╨╝ ╨╜╨░╤З╨╕╤Б╨╗╤П╤В {amount} тнР.",
         reply_markup=main_menu())
 
     admin_kb = InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="Оплатил ✅",
+        InlineKeyboardButton(text="╨Ю╨┐╨╗╨░╤В╨╕╨╗ тЬЕ",
                              callback_data=f"pay_{uid}_{amount}")
     ]])
 
     try:
-        await bot.send_message(ADMIN_ID, f"📥 *Новая заявка на ввод!*\n"
-                               f"Пользователь: [ссылка](tg://user?id={uid})\n"
-                               f"Сумма: {amount} ⭐",
+        await bot.send_message(ADMIN_ID, f"ЁЯУе *╨Э╨╛╨▓╨░╤П ╨╖╨░╤П╨▓╨║╨░ ╨╜╨░ ╨▓╨▓╨╛╨┤!*\n"
+                               f"╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М: [╤Б╤Б╤Л╨╗╨║╨░](tg://user?id={uid})\n"
+                               f"╨б╤Г╨╝╨╝╨░: {amount} тнР",
                                parse_mode="Markdown",
                                reply_markup=admin_kb)
     except Exception:
@@ -713,7 +784,7 @@ async def process_enter_amount(message: Message, state: FSMContext):
     await state.clear()
 
 
-# Обработка нажатий админом
+# ╨Ю╨▒╤А╨░╨▒╨╛╤В╨║╨░ ╨╜╨░╨╢╨░╤В╨╕╨╣ ╨░╨┤╨╝╨╕╨╜╨╛╨╝
 @dp.callback_query(F.data.startswith("pay_"))
 async def admin_pay_confirm(callback: CallbackQuery):
     _, uid, amount = callback.data.split("_")
@@ -722,14 +793,14 @@ async def admin_pay_confirm(callback: CallbackQuery):
     current_balance = get_user_balance(uid)
     try:
         await bot.send_message(
-            uid, f"✅ Вы успешно ввели {amount} ⭐️\n"
-            f"Остаток: {current_balance} ⭐️")
-        await callback.answer("Пользователь уведомлен! ✅")
+            uid, f"тЬЕ ╨Т╤Л ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨▓╨▓╨╡╨╗╨╕ {amount} тнРя╕П\n"
+            f"╨Ю╤Б╤В╨░╤В╨╛╨║: {current_balance} тнРя╕П")
+        await callback.answer("╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜! тЬЕ")
         await callback.message.edit_text(callback.message.text +
-                                         "\n\n✅ ОПЛАЧЕНО",
+                                         "\n\nтЬЕ ╨Ю╨Я╨Ы╨Р╨з╨Х╨Э╨Ю",
                                          reply_markup=None)
     except Exception as e:
-        await callback.answer(f"Ошибка уведомления: {e}", show_alert=True)
+        await callback.answer(f"╨Ю╤И╨╕╨▒╨║╨░ ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╤П: {e}", show_alert=True)
 
 
 @dp.callback_query(F.data.startswith("gift_"))
@@ -739,32 +810,32 @@ async def admin_gift_sent_confirm(callback: CallbackQuery):
     current_balance = get_user_balance(uid)
     try:
         await bot.send_message(
-            uid, f"✅ Вы успешно обменяли ⭐ на {gift_name}\n"
-            f"Остаток: {current_balance} ⭐️")
-        await callback.answer("Пользователь уведомлен! ✅")
+            uid, f"тЬЕ ╨Т╤Л ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╛╨▒╨╝╨╡╨╜╤П╨╗╨╕ тнР ╨╜╨░ {gift_name}\n"
+            f"╨Ю╤Б╤В╨░╤В╨╛╨║: {current_balance} тнРя╕П")
+        await callback.answer("╨Я╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜! тЬЕ")
         await callback.message.edit_text(callback.message.text +
-                                         "\n\n✅ ОТПРАВЛЕНО",
+                                         "\n\nтЬЕ ╨Ю╨в╨Я╨а╨Р╨Т╨Ы╨Х╨Э╨Ю",
                                          reply_markup=None)
     except Exception as e:
-        await callback.answer(f"Ошибка уведомления: {e}", show_alert=True)
+        await callback.answer(f"╨Ю╤И╨╕╨▒╨║╨░ ╤Г╨▓╨╡╨┤╨╛╨╝╨╗╨╡╨╜╨╕╤П: {e}", show_alert=True)
 
 
-# Обработка ответа админа на помощь
+# ╨Ю╨▒╤А╨░╨▒╨╛╤В╨║╨░ ╨╛╤В╨▓╨╡╤В╨░ ╨░╨┤╨╝╨╕╨╜╨░ ╨╜╨░ ╨┐╨╛╨╝╨╛╤Й╤М
 @dp.callback_query(F.data.startswith("reply_"))
 async def admin_start_reply(callback: CallbackQuery, state: FSMContext):
     uid = int(callback.data.split("_")[1])
     await state.update_data(reply_to_uid=uid)
     await callback.message.answer(
-        f"Введите ответ для пользователя [ID: {uid}]:", reply_markup=back_kb())
+        f"╨Т╨▓╨╡╨┤╨╕╤В╨╡ ╨╛╤В╨▓╨╡╤В ╨┤╨╗╤П ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П [ID: {uid}]:", reply_markup=back_kb())
     await state.set_state(AdminSupportReply.message)
     await callback.answer()
 
 
 @dp.message(AdminSupportReply.message)
 async def process_admin_support_reply(message: Message, state: FSMContext):
-    if message.text == "🔙 Назад в меню":
+    if message.text == "ЁЯФЩ ╨Э╨░╨╖╨░╨┤ ╨▓ ╨╝╨╡╨╜╤О":
         await state.clear()
-        await message.answer("Отменено.", reply_markup=main_menu())
+        await message.answer("╨Ю╤В╨╝╨╡╨╜╨╡╨╜╨╛.", reply_markup=main_menu())
         return
 
     data = await state.get_data()
@@ -773,34 +844,34 @@ async def process_admin_support_reply(message: Message, state: FSMContext):
     try:
         await bot.send_message(
             user_id,
-            f"✉️ *Ответ от администрации:*\n\n{message.text}",
+            f"тЬЙя╕П *╨Ю╤В╨▓╨╡╤В ╨╛╤В ╨░╨┤╨╝╨╕╨╜╨╕╤Б╤В╤А╨░╤Ж╨╕╨╕:*\n\n{message.text}",
             parse_mode="Markdown")
-        await message.answer("✅ Ответ успешно отправлен пользователю!",
+        await message.answer("тЬЕ ╨Ю╤В╨▓╨╡╤В ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╛╤В╨┐╤А╨░╨▓╨╗╨╡╨╜ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤О!",
                              reply_markup=main_menu())
     except Exception as e:
-        await message.answer(f"❌ Ошибка при отправке ответа: {e}",
+        await message.answer(f"тЭМ ╨Ю╤И╨╕╨▒╨║╨░ ╨┐╤А╨╕ ╨╛╤В╨┐╤А╨░╨▓╨║╨╡ ╨╛╤В╨▓╨╡╤В╨░: {e}",
                              reply_markup=main_menu())
 
     await state.clear()
 
 
-# ===== ОБРАБОТКА СЛУЧАЙНОГО ТЕКСТА =====
+# ===== ╨Ю╨С╨а╨Р╨С╨Ю╨в╨Ъ╨Р ╨б╨Ы╨г╨з╨Р╨Щ╨Э╨Ю╨У╨Ю ╨в╨Х╨Ъ╨б╨в╨Р =====
 @dp.message()
 async def handle_invalid_input(message: Message):
-    """Обработка всех остальных сообщений"""
+    """╨Ю╨▒╤А╨░╨▒╨╛╤В╨║╨░ ╨▓╤Б╨╡╤Е ╨╛╤Б╤В╨░╨╗╤М╨╜╤Л╤Е ╤Б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╨╣"""
     await message.answer(
-        "⚠️ Неверный ввод\n\n"
-        "Бот не обрабатывает произвольный текст.\n"
-        "Используйте кнопки ниже ⬇️",
+        "тЪая╕П ╨Э╨╡╨▓╨╡╤А╨╜╤Л╨╣ ╨▓╨▓╨╛╨┤\n\n"
+        "╨С╨╛╤В ╨╜╨╡ ╨╛╨▒╤А╨░╨▒╨░╤В╤Л╨▓╨░╨╡╤В ╨┐╤А╨╛╨╕╨╖╨▓╨╛╨╗╤М╨╜╤Л╨╣ ╤В╨╡╨║╤Б╤В.\n"
+        "╨Ш╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╣╤В╨╡ ╨║╨╜╨╛╨┐╨║╨╕ ╨╜╨╕╨╢╨╡ тмЗя╕П",
         reply_markup=main_menu())
     
-    await log_to_channel(f"❌ **Неверный ввод:** [{message.from_user.full_name}](tg://user?id={message.from_user.id}) написал: `{message.text}`")
+    await log_to_channel(f"тЭМ **╨Э╨╡╨▓╨╡╤А╨╜╤Л╨╣ ╨▓╨▓╨╛╨┤:** [{message.from_user.full_name}](tg://user?id={message.from_user.id}) ╨╜╨░╨┐╨╕╤Б╨░╨╗: `{message.text}`")
 
 
-# ===== ЗАПУСК =====
+# ===== ╨Ч╨Р╨Я╨г╨б╨Ъ =====
 async def main():
-    print("🚀 BOT STARTED")
-    keep_alive()  # Запускаем веб-сервер для "живучести"
+    print("ЁЯЪА BOT STARTED")
+    keep_alive()  # ╨Ч╨░╨┐╤Г╤Б╨║╨░╨╡╨╝ ╨▓╨╡╨▒-╤Б╨╡╤А╨▓╨╡╤А ╨┤╨╗╤П "╨╢╨╕╨▓╤Г╤З╨╡╤Б╤В╨╕"
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
